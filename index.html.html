@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AI Study Assistant — Free</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f2;
+  --bg2:#ffffff;
+  --bg3:#f0ede6;
+  --bg4:#e8e4da;
+  --border:#d6d1c4;
+  --border2:#c4bfb0;
+  --ink:#1a1814;
+  --ink2:#5a5548;
+  --ink3:#8a8478;
+  --accent:#d4500a;
+  --accent2:#e8703a;
+  --green:#2a7a4a;
+  --blue:#1a5a8a;
+  --yellow:#c4900a;
+  --radius:12px;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --mono:'Fira Code',monospace;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--ink)}
+#shell{
+  display:flex;flex-direction:column;height:100vh;
+  max-width:900px;margin:0 auto;width:100%;
+}
+
+/* HEADER */
+#header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;
+  background:var(--bg2);
+  border-bottom:1.5px solid var(--border);
+  flex-shrink:0;
+}
+#logo{display:flex;align-items:center;gap:12px}
+#logo-mark{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;font-weight:700;
+  letter-spacing:-1px;
+}
+#logo-text h1{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-0.3px}
+#logo-text p{font-size:11px;color:var(--ink3);margin-top:1px}
+#status-pill{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:500;
+  padding:5px 12px;border-radius:20px;
+  border:1.5px solid var(--border);
+  color:var(--ink2);
+  background:var(--bg3);
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0}
+.status-dot.online{background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* TOOLBAR */
+#toolbar{
+  display:flex;flex-direction:column;gap:10px;
+  padding:12px 20px;
+  background:var(--bg2);
+  border-bottom:1.5px solid var(--border);
+  flex-shrink:0;
+}
+#chip-row{display:flex;gap:7px;flex-wrap:wrap}
+.chip{
+  font-size:12px;font-weight:600;padding:5px 13px;
+  border-radius:6px;border:1.5px solid var(--border);
+  color:var(--ink2);cursor:pointer;background:var(--bg3);
+  font-family:var(--font);transition:all .15s;
+  letter-spacing:.2px;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+#mode-row{display:flex;gap:7px;flex-wrap:wrap}
+.mdbtn{
+  font-size:12px;font-weight:500;padding:5px 11px;
+  border-radius:6px;border:1.5px solid var(--border);
+  background:var(--bg);color:var(--ink2);
+  cursor:pointer;font-family:var(--font);transition:all .15s;
+  display:flex;align-items:center;gap:4px;
+}
+.mdbtn:hover{background:var(--bg4);border-color:var(--border2);color:var(--ink)}
+.mdbtn .ic{font-size:13px}
+
+/* NOTES PANEL */
+#notes-panel{
+  background:var(--bg2);border-bottom:1.5px solid var(--border);
+  flex-shrink:0;overflow:hidden;max-height:0;transition:max-height .3s ease;
+}
+#notes-panel.open{max-height:160px}
+#notes-inner{padding:12px 20px}
+#notes-label{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+#notes-label span{font-weight:400;color:var(--ink3)}
+#notes-ta{
+  width:100%;height:80px;resize:none;
+  font-family:var(--font);font-size:13px;
+  padding:8px 12px;border-radius:8px;
+  border:1.5px solid var(--border);
+  background:var(--bg3);color:var(--ink);outline:none;
+  transition:border-color .2s;
+}
+#notes-ta:focus{border-color:var(--accent)}
+#notes-ta::placeholder{color:var(--ink3)}
+
+/* MESSAGES */
+#msgs{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;gap:16px;
+  padding:20px;
+  scroll-behavior:smooth;
+}
+#msgs::-webkit-scrollbar{width:5px}
+#msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Welcome */
+#welcome{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:100%;gap:20px;text-align:center;
+  padding:2rem;
+}
+#w-icon{
+  width:72px;height:72px;border-radius:18px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;color:#fff;
+  animation:bob 3s ease-in-out infinite;
+}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+#welcome h2{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.5px}
+#welcome p{font-size:14px;color:var(--ink2);max-width:420px;line-height:1.7}
+#w-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px}
+.wpill{
+  font-size:12px;padding:6px 14px;border-radius:20px;
+  border:1.5px solid var(--border);color:var(--ink2);
+  cursor:pointer;background:var(--bg2);transition:all .2s;
+  font-family:var(--font);
+}
+.wpill:hover{border-color:var(--accent);color:var(--accent);background:#fff8f5}
+
+/* Message bubbles */
+.msg{display:flex;flex-direction:column;max-width:84%;animation:slide .25s ease}
+@keyframes slide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.bot{align-self:flex-start;align-items:flex-start}
+.bubble{padding:12px 16px;border-radius:var(--radius);font-size:14px;line-height:1.75}
+.msg.user .bubble{
+  background:var(--accent);color:#fff;
+  border-bottom-right-radius:3px;
+}
+.msg.bot .bubble{
+  background:var(--bg2);color:var(--ink);
+  border:1.5px solid var(--border);
+  border-bottom-left-radius:3px;
+}
+.bubble h2{font-size:15px;font-weight:700;color:var(--blue);margin:10px 0 5px}
+.bubble h3{font-size:14px;font-weight:600;color:var(--green);margin:8px 0 4px}
+.bubble strong{font-weight:700;color:var(--accent)}
+.bubble em{color:var(--ink2);font-style:italic}
+.bubble ul,.bubble ol{padding-left:18px;margin:6px 0}
+.bubble li{margin-bottom:4px}
+.bubble p{margin:5px 0}
+.bubble hr{border:none;border-top:1.5px solid var(--border);margin:12px 0}
+.bubble blockquote{
+  border-left:3px solid var(--accent);
+  padding:6px 12px;margin:8px 0;
+  background:var(--bg3);border-radius:0 8px 8px 0;
+  font-style:italic;color:var(--ink2);
+}
+.bubble code{
+  font-family:var(--mono);font-size:12px;
+  background:var(--bg3);padding:2px 6px;border-radius:4px;
+  color:var(--blue);border:1px solid var(--border);
+}
+.bubble pre{
+  background:#1a1814;border-radius:10px;
+  padding:14px 16px;margin:10px 0;
+  overflow-x:auto;position:relative;
+  border:1.5px solid #3a3530;
+}
+.bubble pre code{
+  background:none;border:none;padding:0;
+  font-size:13px;color:#e8d9c0;display:block;line-height:1.6;
+}
+.lang-tag{
+  position:absolute;top:8px;left:12px;
+  font-size:10px;font-weight:600;
+  color:#6b6560;text-transform:uppercase;letter-spacing:.5px;
+  font-family:var(--mono);
+}
+.copy-btn{
+  position:absolute;top:8px;right:8px;
+  background:#2a2520;border:1px solid #4a4540;
+  border-radius:6px;color:#9a9590;
+  font-size:11px;padding:3px 8px;cursor:pointer;
+  font-family:var(--font);transition:all .2s;
+}
+.copy-btn:hover{color:#e8d9c0;border-color:#6a6560}
+.sbadge{
+  font-size:10px;font-weight:700;padding:2px 8px;
+  border-radius:4px;background:var(--bg3);
+  color:var(--ink2);border:1px solid var(--border);
+  margin-bottom:5px;display:inline-block;letter-spacing:.3px;
+  text-transform:uppercase;
+}
+.meta{font-size:11px;color:var(--ink3);margin-top:4px;padding:0 4px}
+
+/* Typing */
+#typing{
+  display:none;align-self:flex-start;
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:var(--radius);border-bottom-left-radius:3px;
+  padding:14px 18px;
+}
+#typing.show{display:flex;gap:5px;align-items:center}
+.td{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent2);
+  animation:tp 1.2s infinite;
+}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+/* INPUT */
+#input-sec{
+  padding:14px 20px 18px;
+  background:var(--bg2);
+  border-top:1.5px solid var(--border);
+  flex-shrink:0;
+}
+#input-row{
+  display:flex;gap:10px;align-items:flex-end;
+  background:var(--bg3);
+  border:1.5px solid var(--border2);
+  border-radius:14px;padding:10px 10px 10px 16px;
+  transition:border-color .2s,box-shadow .2s;
+}
+#input-row:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(212,80,10,.08);
+}
+#qinput{
+  flex:1;background:none;border:none;color:var(--ink);
+  font-family:var(--font);font-size:14px;resize:none;outline:none;
+  min-height:24px;max-height:130px;line-height:1.5;
+}
+#qinput::placeholder{color:var(--ink3)}
+#tools-row{display:flex;gap:6px;align-items:center}
+#notes-toggle-btn{
+  font-size:12px;padding:6px 10px;border-radius:8px;
+  border:1.5px solid var(--border);background:var(--bg);
+  color:var(--ink2);cursor:pointer;font-family:var(--font);
+  transition:all .2s;white-space:nowrap;
+}
+#notes-toggle-btn:hover{border-color:var(--accent);color:var(--accent)}
+#send-btn{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--accent);border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+#send-btn:hover{background:var(--accent2);transform:scale(1.06)}
+#send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+#send-btn svg{width:16px;height:16px;fill:#fff}
+#footer-note{
+  font-size:11px;color:var(--ink3);text-align:center;
+  margin-top:8px;
+}
+#footer-note a{color:var(--accent);text-decoration:none}
+#footer-note a:hover{text-decoration:underline}
+
+/* Model info bar */
+#model-bar{
+  font-size:11px;color:var(--ink3);
+  padding:4px 20px 0;
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg2);flex-shrink:0;
+}
+.model-tag{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:4px;padding:1px 7px;
+  font-weight:600;color:var(--ink2);font-size:11px;
+}
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="logo">
+      <div id="logo-mark">SA</div>
+      <div id="logo-text">
+        <h1>AI Study Assistant</h1>
+        <p>100% Free · No API key · No login required</p>
+      </div>
+    </div>
+    <div id="status-pill">
+      <div class="status-dot" id="sdot"></div>
+      <span id="stext">Initializing...</span>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <div id="chip-row">
+      <button class="chip active" onclick="setSub(this,'General')">General</button>
+      <button class="chip" onclick="setSub(this,'DBMS')">DBMS</button>
+      <button class="chip" onclick="setSub(this,'OS')">OS</button>
+      <button class="chip" onclick="setSub(this,'DSA')">DSA</button>
+      <button class="chip" onclick="setSub(this,'Python')">Python</button>
+      <button class="chip" onclick="setSub(this,'C++')">C++</button>
+      <button class="chip" onclick="setSub(this,'Maths')">Maths</button>
+      <button class="chip" onclick="setSub(this,'Science')">Science</button>
+      <button class="chip" onclick="setSub(this,'Psychology')">Psychology</button>
+      <button class="chip" onclick="setSub(this,'Networks')">Networks</button>
+    </div>
+    <div id="mode-row">
+      <button class="mdbtn" onclick="quick('explain')"><span class="ic">💡</span>Explain</button>
+      <button class="mdbtn" onclick="quick('revise')"><span class="ic">📝</span>Revise</button>
+      <button class="mdbtn" onclick="quick('important')"><span class="ic">⭐</span>Important Qs</button>
+      <button class="mdbtn" onclick="quick('code')"><span class="ic">💻</span>Code</button>
+      <button class="mdbtn" onclick="quick('quiz')"><span class="ic">🎯</span>Quiz me</button>
+      <button class="mdbtn" onclick="quick('diff')"><span class="ic">⚖️</span>Difference</button>
+      <button class="mdbtn" onclick="clearChat()"><span class="ic">🗑️</span>Clear</button>
+    </div>
+  </div>
+
+  <!-- Notes Panel -->
+  <div id="notes-panel">
+    <div id="notes-inner">
+      <div id="notes-label">📎 Your study notes <span>— paste text from book/PDF; assistant will prioritize it</span></div>
+      <textarea id="notes-ta" placeholder="Paste chapter text, definitions, or any notes here..."></textarea>
+    </div>
+  </div>
+
+  <!-- Model info bar -->
+  <div id="model-bar">
+    Engine: <span class="model-tag" id="engine-tag">detecting...</span>
+    <span id="engine-desc"></span>
+  </div>
+
+  <!-- Messages -->
+  <div id="msgs">
+    <div id="welcome">
+      <div id="w-icon">🎓</div>
+      <h2>Hello, Student! 👋</h2>
+      <p>100% free — no API key, no login. Ask anything about your subjects and get clear, exam-ready answers.</p>
+      <div id="w-pills">
+        <span class="wpill" onclick="setQ('Explain deadlock in OS with a real-world example')">Deadlock in OS</span>
+        <span class="wpill" onclick="setQ('Important exam questions from DBMS normalization')">DBMS normalization Qs</span>
+        <span class="wpill" onclick="setQ('Write binary search code in Python with explanation')">Binary search code</span>
+        <span class="wpill" onclick="setQ('Difference between TCP and UDP with examples')">TCP vs UDP</span>
+        <span class="wpill" onclick="setQ('Give me short revision notes for DSA sorting algorithms')">Revise sorting</span>
+        <span class="wpill" onclick="setQ('Explain paging in OS step by step')">Paging in OS</span>
+      </div>
+    </div>
+    <div id="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>
+  </div>
+
+  <!-- Input -->
+  <div id="input-sec">
+    <div id="input-row">
+      <textarea id="qinput" rows="1" placeholder="Type your question... (Enter to send, Shift+Enter for new line)" onkeydown="handleKey(event)" oninput="resize(this)"></textarea>
+      <div id="tools-row">
+        <button id="notes-toggle-btn" onclick="toggleNotes()">📎 Notes</button>
+        <button id="send-btn" onclick="send()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="footer-note">
+      Using <strong id="fn-engine">local AI engine</strong> · Completely free, runs in your browser ·
+      <a href="https://ollama.com" target="_blank">Install Ollama</a> for smarter answers
+    </div>
+  </div>
+
+</div>
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let subject = 'General';
+let history = [];
+let loading = false;
+let engine = 'offline'; // 'ollama' | 'offline'
+const OLLAMA_URL = 'http://localhost:11434/api/chat';
+const OLLAMA_MODEL = 'llama3.2'; // free model
+
+/* ═══════════════════════════════════════════
+   ENGINE DETECTION
+═══════════════════════════════════════════ */
+async function detectEngine() {
+  try {
+    const r = await fetch('http://localhost:11434/api/tags', {signal: AbortSignal.timeout(2000)});
+    if (r.ok) {
+      const data = await r.json();
+      const models = data.models || [];
+      const preferred = ['llama3.2','llama3','llama3.1','mistral','gemma2','gemma','phi3','phi','qwen2','deepseek'];
+      let found = null;
+      for (const p of preferred) {
+        const m = models.find(m => m.name.toLowerCase().startsWith(p));
+        if (m) { found = m.name; break; }
+      }
+      if (!found && models.length > 0) found = models[0].name;
+      if (found) {
+        engine = 'ollama';
+        window._ollamaModel = found;
+        setStatus(true, 'Ollama · ' + found.split(':')[0]);
+        document.getElementById('engine-tag').textContent = 'Ollama (' + found.split(':')[0] + ')';
+        document.getElementById('engine-desc').textContent = '— free local AI model running on your computer';
+        document.getElementById('fn-engine').textContent = found.split(':')[0] + ' (Ollama)';
+        return;
+      }
+    }
+  } catch(e) {}
+  engine = 'offline';
+  setStatus(false, 'Offline mode');
+  document.getElementById('engine-tag').textContent = 'Built-in knowledge base';
+  document.getElementById('engine-desc').textContent = '— smart offline responses · Install Ollama for AI-powered answers';
+  document.getElementById('fn-engine').textContent = 'built-in knowledge engine';
+}
+
+function setStatus(online, text) {
+  const dot = document.getElementById('sdot');
+  const st = document.getElementById('stext');
+  dot.className = 'status-dot' + (online ? ' online' : '');
+  st.textContent = text;
+}
+
+/* ═══════════════════════════════════════════
+   SYSTEM PROMPT
+═══════════════════════════════════════════ */
+const SYS = `You are an intelligent AI Study Assistant for students. Give clear, accurate, exam-ready answers.
+
+FORMAT RULES:
+- Theory subjects (DBMS, OS, Psychology, Science, Networks): Definition → Explanation → Example
+- Coding (DSA, Python, C++, programming): Working code in code block + explanation + time complexity
+- "revise" or "revision": Short bullet-point notes only, keep it concise
+- "important questions": Exactly 5 numbered exam Q&A pairs
+- "quiz me": Ask 3 MCQ questions with options A/B/C/D; after user answers, give correct answer + explanation
+- "difference between": Clear comparison with key points
+
+WRITING STYLE:
+- Use ## for headings, ### for subheadings
+- Use **bold** for key terms and definitions
+- Use bullet lists for explanations
+- Use code blocks with language tags for all code
+- Simple English; slight Hindi mix is okay if helpful
+- Friendly tone like a good teacher
+- Never say "I don't know" — always give the best possible answer
+
+ALWAYS: Give structured, exam-ready answers. Be concise but complete.`;
+
+/* ═══════════════════════════════════════════
+   OFFLINE KNOWLEDGE BASE
+═══════════════════════════════════════════ */
+const KB = {
+  // ── OS ──
+  'deadlock': `## Deadlock in OS\n\n**Definition:** A deadlock is a situation where a group of processes are permanently blocked, each waiting for a resource held by another.\n\n### Four Necessary Conditions (Coffman Conditions)\n- **Mutual Exclusion** — only one process can use a resource at a time\n- **Hold and Wait** — a process holds one resource and waits for another\n- **No Preemption** — a resource cannot be forcibly taken from a process\n- **Circular Wait** — a circular chain of processes, each waiting for the next\n\n### Example\nProcess A holds Resource 1, wants Resource 2.\nProcess B holds Resource 2, wants Resource 1.\n→ Both wait forever = **Deadlock!**\n\n### Prevention Methods\n- **Banker's Algorithm** — check safe state before allocating\n- **Resource ordering** — assign a fixed order to request resources\n- **Timeouts** — kill process if it waits too long`,
+
+  'paging': `## Paging in OS\n\n**Definition:** Paging is a memory management technique that divides physical memory into fixed-size blocks called **frames** and logical memory into same-size blocks called **pages**.\n\n### How it works (Step by Step)\n1. Process is divided into equal-size **pages**\n2. RAM is divided into equal-size **frames**\n3. OS maintains a **Page Table** that maps pages → frames\n4. CPU generates a **logical address** = (page number, offset)\n5. OS looks up page table → converts to **physical address** = (frame number, offset)\n\n### Advantages\n- **No external fragmentation**\n- Easy memory allocation\n- Pages can be stored non-contiguously\n\n### Key Terms\n- **Page Table** — mapping of page → frame\n- **TLB (Translation Lookaside Buffer)** — cache for page table, makes lookup faster\n- **Page Fault** — page not in RAM, must load from disk`,
+
+  'scheduling': `## CPU Scheduling Algorithms\n\n### 1. FCFS (First Come First Serve)\n- Processes execute in arrival order\n- **Non-preemptive** | Simple but may cause **Convoy Effect**\n\n### 2. SJF (Shortest Job First)\n- Process with shortest burst time runs first\n- **Minimum average waiting time**\n- Problem: **Starvation** of long processes\n\n### 3. Round Robin\n- Each process gets a fixed **time quantum**\n- **Preemptive** | Best for time-sharing systems\n- Performance depends on quantum size\n\n### 4. Priority Scheduling\n- Highest priority process runs first\n- Problem: **Starvation** → Solution: **Aging**\n\n### 5. SRTF (Shortest Remaining Time First)\n- Preemptive version of SJF\n- Always runs process with least remaining time\n\n**Key formula:** Turnaround Time = Completion Time - Arrival Time`,
+
+  'process': `## Process vs Thread\n\n**Process:** An instance of a program in execution. Has its own memory space.\n**Thread:** A lightweight unit of execution within a process. Shares memory with other threads.\n\n| Feature | Process | Thread |\n|---------|---------|--------|\n| Memory | Separate | Shared |\n| Creation | Slow (heavy) | Fast (light) |\n| Communication | Complex (IPC) | Simple (shared memory) |\n| Crash effect | Only that process | Can crash whole process |\n\n### Process States\n**New → Ready → Running → Waiting → Terminated**`,
+
+  // ── DBMS ──
+  'normalization': `## Normalization in DBMS\n\n**Definition:** Normalization is the process of organizing a database to reduce **data redundancy** and improve **data integrity**.\n\n### Normal Forms\n\n#### 1NF (First Normal Form)\n- Each column has **atomic (indivisible) values**\n- No repeating groups\n- Example: Split "Phone1, Phone2" into separate rows\n\n#### 2NF (Second Normal Form)\n- Must be in 1NF\n- **No partial dependency** — non-key attributes depend on the whole primary key\n- Applies when primary key is composite\n\n#### 3NF (Third Normal Form)\n- Must be in 2NF\n- **No transitive dependency** — non-key attribute should NOT depend on another non-key attribute\n- If A→B and B→C, remove B→C to a separate table\n\n#### BCNF (Boyce-Codd Normal Form)\n- Stricter version of 3NF\n- For every functional dependency X→Y, X must be a **super key**\n\n### Why Normalize?\n- Eliminate **redundancy** (duplicate data)\n- Prevent **anomalies** (insert, update, delete)\n- Save **storage space**`,
+
+  'sql': `## SQL — Key Commands\n\n### DDL (Data Definition Language)\n\`\`\`sql\nCREATE TABLE Students (id INT PRIMARY KEY, name VARCHAR(50), marks INT);\nALTER TABLE Students ADD COLUMN grade CHAR(1);\nDROP TABLE Students;\n\`\`\`\n\n### DML (Data Manipulation Language)\n\`\`\`sql\nINSERT INTO Students VALUES (1, 'Rahul', 85, 'A');\nSELECT name, marks FROM Students WHERE marks > 60 ORDER BY marks DESC;\nUPDATE Students SET grade='B' WHERE marks BETWEEN 50 AND 70;\nDELETE FROM Students WHERE id=1;\n\`\`\`\n\n### Joins\n\`\`\`sql\nSELECT s.name, c.course FROM Students s\nINNER JOIN Courses c ON s.id = c.student_id;\n\`\`\`\n\n### Aggregates\n\`\`\`sql\nSELECT AVG(marks), MAX(marks), COUNT(*) FROM Students GROUP BY grade;\n\`\`\``,
+
+  'transaction': `## Transactions in DBMS\n\n**Definition:** A transaction is a sequence of operations performed as a **single logical unit of work**.\n\n### ACID Properties\n- **A — Atomicity:** All operations succeed or all fail (no partial execution)\n- **C — Consistency:** Database moves from one valid state to another\n- **I — Isolation:** Concurrent transactions don't interfere with each other\n- **D — Durability:** Committed changes are permanent even after system failure\n\n### Transaction States\n**Active → Partially Committed → Committed** ✅\n**Active → Failed → Aborted** ❌\n\n### Concurrency Problems\n- **Dirty Read** — reading uncommitted data\n- **Non-repeatable Read** — data changes between two reads\n- **Phantom Read** — new rows appear between reads\n\n**Solution:** Use isolation levels — Read Uncommitted, Read Committed, Repeatable Read, Serializable`,
+
+  // ── DSA ──
+  'binary search': `## Binary Search\n\n**Definition:** An efficient algorithm to find an element in a **sorted array** by repeatedly dividing the search space in half.\n\n**Time Complexity:** O(log n) | **Space:** O(1)\n\n\`\`\`python\ndef binary_search(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid          # Found!\n        elif arr[mid] < target:\n            left = mid + 1      # Search right half\n        else:\n            right = mid - 1     # Search left half\n    return -1                   # Not found\n\n# Example\narr = [2, 5, 8, 12, 16, 23, 38, 56]\nprint(binary_search(arr, 23))   # Output: 5\n\`\`\`\n\n### How it works\n1. Start with the middle element\n2. If target == mid → found!\n3. If target > mid → search right half\n4. If target < mid → search left half\n5. Repeat until found or left > right`,
+
+  'linked list': `## Linked List\n\n**Definition:** A linear data structure where elements (nodes) are stored in non-contiguous memory locations, connected via **pointers**.\n\n### Types\n- **Singly Linked List** — each node has data + next pointer\n- **Doubly Linked List** — each node has data + next + prev pointer\n- **Circular Linked List** — last node points back to first\n\n### Node Structure (Python)\n\`\`\`python\nclass Node:\n    def __init__(self, data):\n        self.data = data\n        self.next = None\n\nclass LinkedList:\n    def __init__(self):\n        self.head = None\n\n    def insert(self, data):\n        new_node = Node(data)\n        if not self.head:\n            self.head = new_node\n            return\n        curr = self.head\n        while curr.next:\n            curr = curr.next\n        curr.next = new_node\n\n    def display(self):\n        curr = self.head\n        while curr:\n            print(curr.data, end=' → ')\n            curr = curr.next\n        print('None')\n\`\`\`\n\n### Time Complexity\n| Operation | Array | Linked List |\n|-----------|-------|-------------|\n| Access | O(1) | O(n) |\n| Insert (beginning) | O(n) | O(1) |\n| Delete | O(n) | O(1) if pointer known |`,
+
+  'sorting': `## Sorting Algorithms — Quick Revision\n\n### Bubble Sort — O(n²)\n- Compare adjacent elements, swap if out of order\n- Simple but slow\n\n### Selection Sort — O(n²)\n- Find minimum, place at beginning, repeat\n- Less swaps than bubble sort\n\n### Insertion Sort — O(n²) worst, O(n) best\n- Insert each element into its correct position\n- **Best for nearly sorted arrays**\n\n### Merge Sort — O(n log n)\n- Divide array into halves, sort each, merge\n- **Stable** | Uses O(n) extra space\n\n### Quick Sort — O(n log n) avg, O(n²) worst\n- Pick pivot, partition array, recurse\n- **In-place** | Usually fastest in practice\n\n### Heap Sort — O(n log n)\n- Build max-heap, extract max repeatedly\n- In-place but not stable\n\n\`\`\`python\n# Merge Sort (Python)\ndef merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)\n\ndef merge(left, right):\n    result = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i]); i += 1\n        else:\n            result.append(right[j]); j += 1\n    result.extend(left[i:])\n    result.extend(right[j:])\n    return result\n\`\`\``,
+
+  'stack': `## Stack Data Structure\n\n**Definition:** A linear data structure that follows **LIFO (Last In First Out)** principle.\n\n### Operations\n- **push(x)** — add element on top → O(1)\n- **pop()** — remove top element → O(1)\n- **peek()** — view top without removing → O(1)\n- **isEmpty()** — check if stack is empty → O(1)\n\n\`\`\`python\nclass Stack:\n    def __init__(self):\n        self.items = []\n\n    def push(self, item):\n        self.items.append(item)\n\n    def pop(self):\n        if not self.is_empty():\n            return self.items.pop()\n        return None\n\n    def peek(self):\n        if not self.is_empty():\n            return self.items[-1]\n\n    def is_empty(self):\n        return len(self.items) == 0\n\n    def size(self):\n        return len(self.items)\n\`\`\`\n\n### Real-world Applications\n- **Undo/Redo** in text editors\n- **Browser back button**\n- **Function call stack** in programming\n- **Balanced parentheses** checking\n- **Expression evaluation** (infix → postfix)`,
+
+  // ── Networks ──
+  'tcp': `## TCP vs UDP\n\n### TCP (Transmission Control Protocol)\n- **Connection-oriented** — establishes connection before sending data (3-way handshake)\n- **Reliable** — guarantees delivery, order, and error checking\n- **Slower** — due to overhead\n- **Use cases:** File transfer (FTP), Email (SMTP), Web (HTTP/HTTPS), Banking\n\n### UDP (User Datagram Protocol)\n- **Connectionless** — sends data without establishing connection\n- **Unreliable** — no guarantee of delivery or order\n- **Faster** — minimal overhead\n- **Use cases:** Video streaming, Online gaming, DNS, VoIP, Live broadcasts\n\n### Comparison Table\n| Feature | TCP | UDP |\n|---------|-----|-----|\n| Connection | Yes (3-way handshake) | No |\n| Reliability | Guaranteed | Not guaranteed |\n| Speed | Slower | Faster |\n| Order | Maintained | Not maintained |\n| Error checking | Yes | Minimal |\n| Header size | 20 bytes | 8 bytes |\n\n### 3-Way Handshake (TCP)\n1. **SYN** — Client sends connection request\n2. **SYN-ACK** — Server acknowledges\n3. **ACK** — Client confirms → Connection established`,
+
+  'osi': `## OSI Model — 7 Layers\n\n**Full form:** Open Systems Interconnection\n\n**Mnemonic:** *"All People Seem To Need Data Processing"*\n\n| Layer | Name | Function | Protocols |\n|-------|------|----------|-----------|\n| 7 | **Application** | User interface | HTTP, FTP, SMTP, DNS |\n| 6 | **Presentation** | Encryption, compression | SSL, TLS, JPEG |\n| 5 | **Session** | Session management | NetBIOS, RPC |\n| 4 | **Transport** | End-to-end delivery | TCP, UDP |\n| 3 | **Network** | Routing, IP addressing | IP, ICMP, ARP |\n| 2 | **Data Link** | Framing, MAC addressing | Ethernet, WiFi |\n| 1 | **Physical** | Bits over cable/wireless | Cables, Hubs |\n\n### Remember\n- **Sender:** Application → Physical (top to bottom)\n- **Receiver:** Physical → Application (bottom to top)\n- Each layer adds a **header** (encapsulation) when sending\n- Each layer removes the header (decapsulation) when receiving`,
+
+  // ── Python ──
+  'python basics': `## Python Basics — Quick Reference\n\n### Variables & Data Types\n\`\`\`python\nname = "Rahul"        # str\nage = 20              # int\nmarks = 95.5          # float\nis_pass = True        # bool\nsubjects = ["Math","OS","DBMS"]  # list\ninfo = {"name":"Rahul","age":20} # dict\n\`\`\`\n\n### Loops\n\`\`\`python\n# For loop\nfor i in range(1, 6):\n    print(i)           # 1 2 3 4 5\n\n# While loop\nn = 5\nwhile n > 0:\n    print(n)\n    n -= 1\n\`\`\`\n\n### Functions\n\`\`\`python\ndef greet(name, msg="Hello"):\n    return f"{msg}, {name}!"\n\nprint(greet("Priya"))          # Hello, Priya!\nprint(greet("Raj", "Namaste")) # Namaste, Raj!\n\`\`\`\n\n### List Comprehension\n\`\`\`python\nsquares = [x**2 for x in range(1,6)]  # [1,4,9,16,25]\nevens = [x for x in range(20) if x%2==0]\n\`\`\`\n\n### File Handling\n\`\`\`python\nwith open("notes.txt","w") as f:\n    f.write("Study hard!")\nwith open("notes.txt","r") as f:\n    print(f.read())\n\`\`\``,
+};
+
+/* ─ Offline answer engine ─ */
+function offlineAnswer(q, sub, notes) {
+  const lq = (q + ' ' + sub).toLowerCase();
+
+  // Notes-based answer
+  if (notes) {
+    const sentences = notes.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    const relevant = sentences.filter(s =>
+      q.toLowerCase().split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w))
+    );
+    if (relevant.length >= 2) {
+      return `## Answer (from your notes)\n\n${relevant.slice(0,6).join('. ')}.\n\n---\n*Based on the study material you provided. For a more detailed explanation, install Ollama for free AI-powered answers.*`;
+    }
+  }
+
+  // KB lookup
+  for (const [key, val] of Object.entries(KB)) {
+    if (lq.includes(key)) return val;
+  }
+
+  // Subject-based important questions
+  const importantQs = {
+    'DBMS': `## 5 Important DBMS Exam Questions\n\n**Q1. What is Normalization? Explain 1NF, 2NF, 3NF.**\nNormalization reduces data redundancy. 1NF = atomic values; 2NF = no partial dependency; 3NF = no transitive dependency.\n\n**Q2. What are ACID Properties?**\nAtomicity, Consistency, Isolation, Durability — properties that guarantee reliable transactions.\n\n**Q3. What is the difference between Primary Key and Foreign Key?**\nPrimary Key uniquely identifies a record in its own table. Foreign Key references the Primary Key of another table to establish relationships.\n\n**Q4. Explain different types of Joins with examples.**\nINNER JOIN (matching rows only), LEFT JOIN (all left + matching right), RIGHT JOIN, FULL OUTER JOIN (all rows from both tables).\n\n**Q5. What is a Deadlock in DBMS? How to prevent it?**\nDeadlock occurs when transactions wait for each other's locked resources. Prevention: lock ordering, timeouts, Banker's algorithm.`,
+    'OS': `## 5 Important OS Exam Questions\n\n**Q1. What are the four Coffman conditions for Deadlock?**\nMutual Exclusion, Hold and Wait, No Preemption, Circular Wait — all four must hold for deadlock.\n\n**Q2. Explain CPU Scheduling algorithms with their advantages.**\nFCFS (simple), SJF (min avg waiting time), Round Robin (fair, time-sharing), Priority (urgent first), SRTF (optimal preemptive).\n\n**Q3. What is the difference between Paging and Segmentation?**\nPaging: fixed-size pages, no external fragmentation. Segmentation: variable-size segments based on logical divisions, programmer viewpoint.\n\n**Q4. What is Virtual Memory? How does it work?**\nVirtual Memory allows execution of processes larger than RAM by using disk as extended memory. Uses page replacement algorithms (LRU, FIFO, Optimal).\n\n**Q5. Explain Process Synchronization and the Critical Section problem.**\nCritical Section = code accessing shared resources. Requirements: Mutual Exclusion, Progress, Bounded Waiting. Solutions: Semaphores, Mutex, Monitors.`,
+    'DSA': `## 5 Important DSA Exam Questions\n\n**Q1. Compare sorting algorithms by time complexity.**\nBubble/Selection/Insertion: O(n²). Merge Sort: O(n log n) stable. Quick Sort: O(n log n) avg. Heap Sort: O(n log n) in-place.\n\n**Q2. What is Binary Search? Write its algorithm.**\nDivide-and-conquer on sorted array. Compare target with mid; go left if smaller, right if larger. Time: O(log n).\n\n**Q3. Difference between Stack and Queue.**\nStack: LIFO (Last In First Out) — push/pop from top. Queue: FIFO (First In First Out) — enqueue at back, dequeue from front.\n\n**Q4. What is a Binary Search Tree (BST)?**\nTree where left child < parent < right child. Search: O(log n) avg. Operations: insert, delete, search — all O(h) where h = height.\n\n**Q5. Explain Dynamic Programming with an example.**\nSolves problems by breaking into overlapping subproblems and storing results (memoization/tabulation). Example: Fibonacci, Knapsack, Longest Common Subsequence.`,
+    'Networks': `## 5 Important Networks Exam Questions\n\n**Q1. Explain the OSI 7-layer model with protocols at each layer.**\nPhysical→Data Link→Network→Transport→Session→Presentation→Application. Protocols: Ethernet, IP, TCP/UDP, HTTP, etc.\n\n**Q2. Difference between TCP and UDP with use cases.**\nTCP: reliable, connection-oriented, ordered (HTTP, FTP). UDP: fast, connectionless, unreliable (video streaming, DNS, gaming).\n\n**Q3. What is subnetting? How is it done?**\nDividing a network into smaller sub-networks using subnet masks. Reduces broadcast traffic and improves security/management.\n\n**Q4. Explain the 3-Way Handshake in TCP.**\nSYN (client requests) → SYN-ACK (server responds) → ACK (client confirms) → Connection established.\n\n**Q5. What is DNS? How does name resolution work?**\nDomain Name System maps domain names to IP addresses. Browser → Recursive Resolver → Root Server → TLD Server → Authoritative Server → IP returned.`
+  };
+
+  // Mode-based responses
+  if (lq.includes('important') || lq.includes('exam question')) {
+    if (importantQs[sub]) return importantQs[sub];
+    return `## 5 Important Questions — ${sub}\n\n*To get AI-generated questions specific to your syllabus, install [Ollama](https://ollama.com) (free) and run a model locally. I'll automatically use it for smarter answers!*\n\n**Meanwhile, common exam topics in ${sub}:**\n- Definitions and key concepts\n- Comparison between related topics\n- Real-world applications and examples\n- Algorithms or processes (step-by-step)\n- Advantages and disadvantages`;
+  }
+
+  if (lq.includes('revise') || lq.includes('revision') || lq.includes('short notes')) {
+    const revisionMap = {
+      'DBMS': `## DBMS Quick Revision\n\n- **DBMS** = software to manage databases (MySQL, PostgreSQL, Oracle)\n- **DDL** = CREATE, ALTER, DROP (structure)\n- **DML** = INSERT, UPDATE, DELETE, SELECT (data)\n- **Keys:** Primary (unique ID), Foreign (link tables), Candidate (possible PKs)\n- **Normalization:** 1NF (atomic) → 2NF (no partial dep) → 3NF (no transitive dep) → BCNF\n- **ACID:** Atomicity, Consistency, Isolation, Durability\n- **Joins:** INNER, LEFT, RIGHT, FULL OUTER, CROSS, SELF\n- **Indexing:** B-tree, Hash — speeds up SELECT queries\n- **Transactions:** BEGIN → operations → COMMIT or ROLLBACK\n- **ER Model:** Entities, Attributes, Relationships, Cardinality`,
+      'OS': `## OS Quick Revision\n\n- **OS Functions:** Process, Memory, File, I/O, Security management\n- **Process States:** New → Ready → Running → Waiting → Terminated\n- **Scheduling:** FCFS, SJF, SRTF, Round Robin, Priority\n- **Deadlock Conditions:** Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait\n- **Memory:** Paging (fixed-size), Segmentation (variable-size), Virtual Memory\n- **Page Replacement:** FIFO, LRU (Least Recently Used), Optimal\n- **Semaphores:** Binary (mutex) and Counting — for synchronization\n- **File Systems:** FAT32, NTFS, ext4 — organize files on disk\n- **Thrashing:** Excessive page faults, CPU busy swapping pages`,
+      'DSA': `## DSA Quick Revision\n\n- **Arrays:** O(1) access, O(n) insert/delete\n- **Linked List:** O(n) access, O(1) insert at head\n- **Stack:** LIFO — push/pop O(1) — used in function calls, undo\n- **Queue:** FIFO — enqueue/dequeue O(1) — used in BFS, scheduling\n- **Trees:** Binary Tree, BST (left<root<right), AVL (balanced)\n- **Heap:** Max-heap/Min-heap — priority queue — O(log n) insert\n- **Graph Traversal:** BFS (level-wise), DFS (depth-first)\n- **Sorting:** Bubble O(n²), Merge O(n log n), Quick O(n log n) avg\n- **Searching:** Linear O(n), Binary O(log n) — requires sorted array\n- **DP:** Memoization + Tabulation — Fibonacci, Knapsack, LCS`
+    };
+    if (revisionMap[sub]) return revisionMap[sub];
+  }
+
+  // Generic helpful response
+  return `## ${q}\n\n**Subject: ${sub}**\n\nI have knowledge about many topics in ${sub}. Here's what I can help you with:\n\n### Try asking specifically about:\n- Key concepts and definitions\n- Step-by-step explanations with examples\n- Code examples (for programming subjects)\n- Comparison between topics (e.g., "Difference between X and Y")\n- "Important questions from ${sub}"\n- "Revise ${sub}"\n\n### Popular topics in ${sub}:\n${getTopicSuggestions(sub)}\n\n---\n💡 **Tip:** Install [Ollama](https://ollama.com) (free, runs locally) for full AI-powered answers on any topic!`;
+}
+
+function getTopicSuggestions(sub) {
+  const map = {
+    'DBMS': '- Normalization (1NF, 2NF, 3NF)\n- SQL queries and Joins\n- ACID Properties & Transactions\n- ER Model and Schema design\n- Indexing and Query optimization',
+    'OS': '- Deadlock and Prevention\n- CPU Scheduling algorithms\n- Paging and Segmentation\n- Virtual Memory & Page Replacement\n- Process Synchronization & Semaphores',
+    'DSA': '- Sorting algorithms (Merge, Quick, Heap)\n- Binary Search and its variants\n- Linked List, Stack, Queue operations\n- Trees (BST, AVL, Heap)\n- Dynamic Programming problems',
+    'Networks': '- OSI and TCP/IP models\n- TCP vs UDP comparison\n- DNS, DHCP, HTTP, FTP protocols\n- Routing algorithms\n- Subnetting and IP addressing',
+    'Python': '- Lists, Dicts, Sets, Tuples\n- OOP (Classes, Inheritance)\n- File handling and exceptions\n- Decorators and Generators\n- NumPy, Pandas basics',
+  };
+  return map[sub] || `- Core concepts and definitions\n- Problem-solving techniques\n- Real-world applications\n- Comparison of related topics\n- Important formulas and theorems`;
+}
+
+/* ═══════════════════════════════════════════
+   OLLAMA CALL
+═══════════════════════════════════════════ */
+async function callOllama(question, notes, sub) {
+  const model = window._ollamaModel || OLLAMA_MODEL;
+  const systemMsg = SYS;
+  const userContent = (notes ? `[Study Notes Provided]:\n${notes}\n\n` : '') +
+    (sub !== 'General' ? `[Subject: ${sub}]\n\n` : '') + question;
+
+  const messages = [
+    ...history.slice(-8),
+    { role: 'user', content: userContent }
+  ];
+
+  const res = await fetch(OLLAMA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages: [{role:'system',content:systemMsg}, ...messages], stream: false })
+  });
+
+  if (!res.ok) throw new Error('Ollama request failed');
+  const data = await res.json();
+  return data.message?.content || data.choices?.[0]?.message?.content || 'No response';
+}
+
+/* ═══════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════ */
+function setSub(el, s) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  subject = s;
+}
+
+function quick(mode) {
+  const map = {
+    explain: `Explain the most important concept in ${subject} with a clear real-world example`,
+    revise: `Give me short revision notes for ${subject} — key points only, bullet format`,
+    important: `Give me 5 important exam questions with answers for ${subject}`,
+    code: `Give me a clean working code example in ${subject} with step-by-step explanation and time complexity`,
+    quiz: `Quiz me on ${subject} — give 3 MCQ questions with options A/B/C/D`,
+    diff: `Explain the main difference between the two most important concepts in ${subject} with a comparison table`
+  };
+  setQ(map[mode] || '');
+}
+
+function setQ(text) {
+  const inp = document.getElementById('qinput');
+  inp.value = text;
+  resize(inp);
+  inp.focus();
+  hideWelcome();
+}
+
+function resize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+function hideWelcome() {
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+}
+
+function clearChat() {
+  history = [];
+  const m = document.getElementById('msgs');
+  m.innerHTML = `
+    <div id="welcome">
+      <div id="w-icon">🎓</div>
+      <h2>Chat cleared! 👋</h2>
+      <p>Start a new question whenever you're ready.</p>
+      <div id="w-pills">
+        <span class="wpill" onclick="setQ('Explain deadlock in OS with a real-world example')">Deadlock in OS</span>
+        <span class="wpill" onclick="setQ('Give me 5 important DBMS questions')">DBMS questions</span>
+        <span class="wpill" onclick="setQ('Write binary search code in Python')">Binary search code</span>
+      </div>
+    </div>
+    <div id="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+}
+
+function toggleNotes() {
+  const p = document.getElementById('notes-panel');
+  p.classList.toggle('open');
+  document.getElementById('notes-toggle-btn').textContent =
+    p.classList.contains('open') ? '✕ Close' : '📎 Notes';
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function fmt(text) {
+  // code blocks
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const id = 'cb_' + Math.random().toString(36).slice(2,8);
+    const escaped = code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const tag = lang ? `<span class="lang-tag">${lang}</span>` : '';
+    return `<pre id="${id}">${tag}<button class="copy-btn" onclick="doCopy('${id}')">Copy</button><code>${escaped}</code></pre>`;
+  });
+  // inline code
+  text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  // headings
+  text = text.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+  text = text.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  // bold, italic
+  text = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g,'<em>$1</em>');
+  // tables (simple)
+  text = text.replace(/\|(.+)\|/g, (m) => {
+    if (m.includes('---')) return '';
+    const cols = m.split('|').filter(c=>c.trim()).map(c=>`<td style="padding:4px 10px;border:1px solid var(--border)">${c.trim()}</td>`);
+    return `<tr>${cols.join('')}</tr>`;
+  });
+  text = text.replace(/(<tr>[\s\S]*?<\/tr>)+/g, m => `<table style="border-collapse:collapse;margin:8px 0;font-size:13px">${m}</table>`);
+  // hr
+  text = text.replace(/^---$/gm,'<hr>');
+  // blockquote
+  text = text.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
+  // lists
+  text = text.replace(/^\d+\.\s+(.+)$/gm,'<li>$1</li>');
+  text = text.replace(/^[-•*]\s+(.+)$/gm,'<li>$1</li>');
+  text = text.replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>');
+  // paragraphs
+  text = text.replace(/\n\n/g,'</p><p>');
+  text = text.replace(/\n/g,'<br>');
+  return '<p>' + text + '</p>';
+}
+
+function doCopy(id) {
+  const code = document.getElementById(id).querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById(id).querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+function addMsg(text, role, sub) {
+  hideWelcome();
+  const msgs = document.getElementById('msgs');
+  const typing = document.getElementById('typing');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+
+  if (role === 'bot' && sub && sub !== 'General') {
+    const badge = document.createElement('span');
+    badge.className = 'sbadge';
+    badge.textContent = sub;
+    wrap.appendChild(badge);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = role === 'user' ? escHtml(text) : fmt(text);
+  wrap.appendChild(bubble);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const eng = engine === 'ollama' ? ('via ' + (window._ollamaModel||'ollama').split(':')[0]) : 'offline engine';
+  meta.textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ' · ' + eng;
+  wrap.appendChild(meta);
+
+  msgs.insertBefore(wrap, typing);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function setLoading(on) {
+  loading = on;
+  document.getElementById('typing').className = on ? 'show' : '';
+  document.getElementById('send-btn').disabled = on;
+  if (on) document.getElementById('msgs').scrollTop = 9999;
+}
+
+/* ═══════════════════════════════════════════
+   MAIN SEND
+═══════════════════════════════════════════ */
+async function send() {
+  if (loading) return;
+  const inp = document.getElementById('qinput');
+  const q = inp.value.trim();
+  if (!q) return;
+  const notes = document.getElementById('notes-ta').value.trim();
+  inp.value = '';
+  resize(inp);
+  addMsg(q, 'user');
+  history.push({ role: 'user', content: q });
+  setLoading(true);
+
+  try {
+    let reply;
+    if (engine === 'ollama') {
+      try {
+        reply = await callOllama(q, notes, subject);
+      } catch(e) {
+        // fallback to offline
+        engine = 'offline';
+        setStatus(false, 'Offline mode');
+        document.getElementById('engine-tag').textContent = 'Built-in engine';
+        reply = offlineAnswer(q, subject, notes);
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 600)); // natural delay
+      reply = offlineAnswer(q, subject, notes);
+    }
+    history.push({ role: 'assistant', content: reply });
+    addMsg(reply, 'bot', subject);
+  } catch(e) {
+    addMsg('Sorry, something went wrong. Please try again.', 'bot', null);
+    history.pop();
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ── Init ── */
+detectEngine();
+</script>
+</body>
+</html>
